@@ -1,0 +1,39 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+build/
+*.tsbuildinfo
+
+# test / coverage
+coverage/
+.vitest/
+
+# TGR local state — NEVER commit (mirrors the ~/.sii/ discipline of the sii repo, ADR-006)
+.tgr/
+*.pfx
+*.p12
+
+# secrets / env
+.env
+.env.*
+!.env.example
+
+# Raw session-anatomy captures from `tgr auth login --observe` (ADR-009). These are RAW output
+# from a live authenticated session: even though the capture records key NAMES and never values,
+# it still carries the landed-URL chain and cookie/domain topology of a real account. Only a
+# human-reviewed, redacted summary graduates into docs/tgr-contract/auth-login.md.
+docs/tgr-contract/*.observed.md
+
+# logs
+*.log
+
+# os / editor
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# local working doc — status is managed locally, not versioned
+docs/CURRENT_STATUS.md

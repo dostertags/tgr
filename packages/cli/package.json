@@ -1,0 +1,36 @@
+{
+  "name": "@dostertags/tgr-cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "CLI for Chile's TGR (Tesorería General de la República). Read-only by construction (ADR-006). Each command is a thin call into @dostertags/tgr-core tasks (ADR-002).",
+  "license": "MIT",
+  "author": "Diego Ostertag",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dostertags/tgr.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/dostertags/tgr#readme",
+  "bugs": {
+    "url": "https://github.com/dostertags/tgr/issues"
+  },
+  "bin": {
+    "tgr": "./dist/main.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@dostertags/tgr-core": "workspace:^",
+    "commander": "^12.1.0",
+    "playwright": "^1.49.0"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "prepack": "tsc -b --clean && tsc -b"
+  }
+}

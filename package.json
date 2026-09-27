@@ -1,0 +1,44 @@
+{
+  "name": "tesoreria-monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Monorepo: a shared TypeScript TGR core consumed by a CLI (and, later, an MCP server). Companion to the sii tool.",
+  "license": "MIT",
+  "author": "Diego Ostertag",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dostertags/tgr.git"
+  },
+  "homepage": "https://github.com/dostertags/tgr#readme",
+  "bugs": {
+    "url": "https://github.com/dostertags/tgr/issues"
+  },
+  "packageManager": "pnpm@10.33.2",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean",
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint packages",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  },
+  "devDependencies": {
+    "@types/node": "^20.16.0",
+    "eslint": "^9.14.0",
+    "prettier": "^3.3.0",
+    "typescript": "^5.6.0",
+    "typescript-eslint": "^8.13.0",
+    "vitest": "^2.1.0"
+  }
+}

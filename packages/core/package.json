@@ -1,0 +1,53 @@
+{
+  "name": "@dostertags/tgr-core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared TGR domain core: rut, config (prod hostnames + payment denylist), auth, seams. A Node library; external side-effects (portal, secrets, audit, clock) are injected via seams (ADR-002).",
+  "license": "MIT",
+  "author": "Diego Ostertag",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dostertags/tgr.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/dostertags/tgr#readme",
+  "bugs": {
+    "url": "https://github.com/dostertags/tgr/issues"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./node": {
+      "types": "./dist/node.d.ts",
+      "default": "./dist/node.js"
+    },
+    "./testing": {
+      "types": "./dist/adapters/fake/index.d.ts",
+      "default": "./dist/adapters/fake/index.js"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "prepack": "tsc -b --clean && tsc -b"
+  },
+  "peerDependencies": {
+    "playwright": "^1.49.0"
+  },
+  "peerDependenciesMeta": {
+    "playwright": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "playwright": "^1.49.0"
+  }
+}

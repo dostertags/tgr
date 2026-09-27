@@ -1,0 +1,124 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build + Lint + Format + Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # No `version:` here — action-setup reads it from package.json `packageManager`.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install (frozen)
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck + build (tsc -b)
+        run: pnpm build
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Format check
+        run: pnpm format:check
+
+      # Includes no-payment.test.ts, which FAILS the build if any module other than
+      # config/payment-denylist.ts references a payment host or the forbidden form value
+      # (ADR-006 / ADR-011).
+      - name: Test
+        run: pnpm test
+
+  secrets:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  validate-context:
+    name: Validate context (ADRs + surface boundary + PII)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: ADR index integrity
+        run: |
+          set -euo pipefail
+          fail=0
+          for f in docs/decisions/[0-9]*.md; do
+            name=$(basename "$f")
+            if ! grep -q "$name" docs/decisions/_index.md; then
+              echo "::error file=docs/decisions/_index.md::ADR $name exists on disk but is not listed in the index."
+              fail=1
+            fi
+          done
+          while IFS= read -r ref; do
+            if [ -n "$ref" ] && [ ! -f "docs/decisions/$ref" ]; then
+              echo "::error file=docs/decisions/_index.md::Index links to missing file: $ref"
+              fail=1
+            fi
+          done < <(grep -oE '\([0-9]{3}-[a-zA-Z0-9-]+\.md\)' docs/decisions/_index.md | tr -d '()' | sort -u)
+          exit $fail
+
+      - name: ADR completeness (5 mandatory sections)
+        run: |
+          set -euo pipefail
+          fail=0
+          for f in docs/decisions/[0-9]*.md; do
+            for section in '## Status' '## Context' '## Decision' '## Alternatives Considered' '## Consequences'; do
+              if ! grep -qxF "$section" "$f"; then
+                echo "::error file=$f::Missing required ADR section '$section'."
+                fail=1
+              fi
+            done
+          done
+          exit $fail
+
+      - name: Surface boundary (ADR-002 — the CLI calls @dostertags/tgr-core tasks only)
+        run: |
+          set -euo pipefail
+          if git grep -nP "from ['\"]@dostertags/tgr-core/(?!(node|testing)['\"])" -- 'packages/cli/**/*.ts'; then
+            echo "::error::The CLI imports a @dostertags/tgr-core internal subpath — ADR-002 forbids. Go through the task layer (allowed: the root barrel, /node, and /testing fakes)."
+            exit 1
+          fi
+          echo "Surface boundary guard: the CLI reaches the core only via tasks (+ /node)."
+
+      - name: PII guard (no real-person RUTs in committed files)
+        # Synthetic Mod-11-valid RUTs (77777777-7, 13000007-K) are allowed. The denylist of real
+        # RUT digit-bodies lives in the PII_RUT_DENYLIST repo secret — NOT here (this file is
+        # public). When the secret is unset (forks), the check is skipped.
+        env:
+          PII_RUT_DENYLIST: ${{ secrets.PII_RUT_DENYLIST }}
+        run: |
+          set -euo pipefail
+          if [ -z "${PII_RUT_DENYLIST:-}" ]; then
+            echo "PII guard: no denylist secret configured — skipping."
+            exit 0
+          fi
+          if git grep -nE "$PII_RUT_DENYLIST" -- packages/ docs/ ; then
+            echo "::error::Real-person RUT digits found in tracked files — PII leak."
+            exit 1
+          fi
+          echo "PII guard: no forbidden RUT digits found."
